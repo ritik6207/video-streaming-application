@@ -4,6 +4,7 @@ import com.stream.entities.Video;
 import com.stream.payload.CustomMessage;
 import com.stream.services.VideoService;
 import com.stream.utils.AppConstants;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
@@ -174,6 +175,60 @@ public class VideoController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+//    serve hls playlist
+//    master.m2u8 file
+
+    @Value("${files.video.hls}")
+    private String HLS_DIR;
+
+    @GetMapping("/{videoId}/master.m3u8")
+    public ResponseEntity<Resource> serveMasterFile(
+            @PathVariable String videoId
+    ){
+//        Creating path
+
+        Path path = Paths.get(HLS_DIR, videoId, "master.m3u8");
+        System.out.println(path);
+
+
+        if(!Files.exists(path)){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Resource resource = new FileSystemResource(path);
+
+        return ResponseEntity
+                .ok()
+                .header(
+                        HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl"
+                )
+                .body(resource);
+
+    }
+
+    @GetMapping("/{videoId}/{segment}.ts")
+    public ResponseEntity<Resource> serveSegments(
+            @PathVariable String videoId,
+            @PathVariable String segment
+    ) {
+
+        // create path for segment
+        Path path = Paths.get(HLS_DIR, videoId, segment + ".ts");
+        if (!Files.exists(path)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Resource resource = new FileSystemResource(path);
+
+        return ResponseEntity
+                .ok()
+                .header(
+                        HttpHeaders.CONTENT_TYPE, "video/mp2t"
+                )
+                .body(resource);
+
     }
 
 }

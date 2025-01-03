@@ -76,10 +76,13 @@ public class VideoServiceImpl implements VideoService {
             video.setContentType(contentType);
             video.setFilePath(path.toString());
 
-            processVideo(video.getVideoId());
+            Video saveVideo = videoRepository.save(video);
+
+
+            processVideo(saveVideo.getVideoId());
 
             // metadata save
-            return videoRepository.save(video);
+            return saveVideo;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
