@@ -1,11 +1,22 @@
 import { VideoUpload } from "./components/VideoUpload";
 import { Toaster } from "react-hot-toast";
 import React, { useState } from "react";
+import { Button, TextInput } from "flowbite-react";
+import VideoPlaylist from "./components/VideoPlaylist";
+import { set } from "video.js/dist/types/tech/middleware";
+
 
 function App() {
   const [videoId, setVideoId] = useState(
     "900b73ec-4173-4e15-b21a-ff07fea3365c"
   );
+
+  const [fieldValue, setFieldValue] = useState(null);
+
+  function playVideo(videoId) {
+    setVideoId(videoId);
+  }
+
   return (
     <>
       <Toaster />
@@ -16,14 +27,19 @@ function App() {
 
         <div className="flex mt-14 w-full justify-around">
           <div>
-            <h1 className="text-white">Playing Video</h1>
-            <video
+            <h1 className="text-white text-center mt-2">Playing Video</h1>
+            {/* <video
               style={{
                 width: 500,
               }}
-              src={`http://localhost:8080/api/v1/videos/stream/range/${videoId}`}
+              // src={`http://localhost:8080/api/v1/videos/stream/range/${videoId}`}
+              src="http://localhost:8080/api/v1/videos900b73ec-4173-4e15-b21a-ff07fea3365c/master.m3u8"
               controls
-            ></video>
+            ></video> */}
+
+            <VideoPlaylist
+              src={`http://localhost:8080/api/v1/${videoId}/master.m3u8`}
+            ></VideoPlaylist>
 
             {/* <video
               id="my-video"
@@ -53,6 +69,18 @@ function App() {
           </div>
 
           <VideoUpload />
+        </div>
+        <div className="my-4 flex space-x-4">
+          <TextInput
+          onClick={(e) => {
+            setFieldValue(e.target.value);
+          }}
+            name="videoId"
+            placeholder="Enter Video Id"
+          />
+          <Button onClick={()=>{
+            setVideoId(fieldValue);
+          }}>Play</Button>
         </div>
       </div>
     </>

@@ -85,7 +85,7 @@ export const VideoUpload = () => {
 
       console.log(response);
       setProgress(0);
-      setMessage("Video uploaded successfully");
+      setMessage("Video uploaded successfully" + response.data.videoId);
       setUploadedFile(false);
       toast.success("Video uploaded successfully");
       resetForm();
