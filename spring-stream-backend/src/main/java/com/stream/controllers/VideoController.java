@@ -34,49 +34,45 @@ public class VideoController {
         this.videoService = videoService;
     }
 
-//    Video uploading
+    // Video uploading
     @PostMapping
     public ResponseEntity<?> create(
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
-            @RequestParam("description") String description
-            ){
+            @RequestParam("description") String description) {
         Video video = new Video();
         video.setTitle(title);
         video.setDescription(description);
         video.setVideoId(UUID.randomUUID().toString());
 
+        Video savedVideo = videoService.save(video, file);
 
-         Video savedVideo =  videoService.save(video, file);
-
-         if(savedVideo != null){
-             return ResponseEntity
-                     .status(HttpStatus.OK)
-                     .body(video);
-         } else {
-             return ResponseEntity
-                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                     .body(CustomMessage.builder()
-                             .message("Video not uploaded")
-                             .success(false)
-                             .build()
-                     );
-         }
+        if (savedVideo != null) {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(video);
+        } else {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(CustomMessage.builder()
+                            .message("Video not uploaded")
+                            .success(false)
+                            .build());
+        }
 
     }
 
-//    get all videos
+    // get all videos
     @GetMapping
-    public List<Video> getAll(){
+    public List<Video> getAll() {
         return videoService.getAll();
     }
 
-//    Streaming video
-//    api => http://localhost:8080/api/v1/videos/stream/123434
+    // Streaming video
+    // api => http://localhost:8080/api/v1/videos/stream/123434
     @GetMapping("/stream/{videoId}")
     public ResponseEntity<Resource> stream(
-            @PathVariable String videoId
-    ){
+            @PathVariable String videoId) {
 
         Video video = videoService.get(videoId);
 
@@ -86,7 +82,7 @@ public class VideoController {
 
         Resource resource = new FileSystemResource(filePath);
 
-        if (contentType == null){
+        if (contentType == null) {
             contentType = "application/octet-stream";
         }
 
@@ -97,12 +93,11 @@ public class VideoController {
 
     }
 
-//    stream video in chunks
+    // stream video in chunks
     @GetMapping("/stream/range/{videoId}")
     public ResponseEntity<Resource> streamVideoRange(
             @PathVariable String videoId,
-            @RequestHeader(value = "range", required = false) String range
-    ){
+            @RequestHeader(value = "range", required = false) String range) {
         System.out.println(range);
 
         Video video = videoService.get(videoId);
@@ -112,20 +107,20 @@ public class VideoController {
 
         String contentType = video.getContentType();
 
-        if (contentType == null){
+        if (contentType == null) {
             contentType = "application/octet-stream";
         }
 
-//        length of file
+        // length of file
         long fileLength = path.toFile().length();
 
-        if (range == null){
+        if (range == null) {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .body(resource);
         }
 
-//        Calculating start and end
+        // Calculating start and end
         long rangeStart;
 
         long rangeEnd;
@@ -136,23 +131,23 @@ public class VideoController {
 
         rangeEnd = rangeStart + AppConstants.CHUNK_SIZE;
 
-        if (rangeEnd >= fileLength){
+        if (rangeEnd >= fileLength) {
             rangeEnd = fileLength - 1;
         }
 
-//        if (ranges.length > 1){
-//            rangeEnd = Long.parseLong(ranges[1]);
-//        }else{
-//            rangeEnd = fileLength - 1;
-//        }
-//
-//        if (rangeEnd > fileLength - 1){
-//            rangeEnd =  fileLength - 1;
-//        }
+        // if (ranges.length > 1){
+        // rangeEnd = Long.parseLong(ranges[1]);
+        // }else{
+        // rangeEnd = fileLength - 1;
+        // }
+        //
+        // if (rangeEnd > fileLength - 1){
+        // rangeEnd = fileLength - 1;
+        // }
 
         InputStream inputStream;
 
-        try{
+        try {
 
             inputStream = Files.newInputStream(path);
             inputStream.skip(rangeStart);
@@ -171,13 +166,12 @@ public class VideoController {
             headers.add("X-Content-Type-Options", "nosniff");
             headers.setContentLength(contentLength);
 
-            return ResponseEntity
-                    .status(HttpStatus.PARTIAL_CONTENT)
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                     .headers(headers)
                     .contentType(MediaType.parseMediaType(contentType))
                     .body(new ByteArrayResource(data));
 
-        }catch (IOException e){
+        } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
